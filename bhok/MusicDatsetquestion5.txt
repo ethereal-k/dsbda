@@ -1,0 +1,215 @@
+//code
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.StringTokenizer;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.FloatWritable;
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+
+
+public class WordCount {
+	public static class mapper extends Mapper<Object,Text,Text,IntWritable>{
+		public static Text keys=new Text("radio");
+		public static Text keys1=new Text("skipped");
+		public void map(Object key,Text value,Context context) throws IOException, InterruptedException{
+			String line=value.toString();
+			String part[]=line.split(",");
+			String val=part[3].substring(1,part[3].length()-1);
+			String val2=part[4].substring(1,part[4].length()-1);
+			//String val="1";
+			if (part.length==5 && Integer.parseInt(val)==1){
+				context.write(keys,new IntWritable(1));
+			}
+			if (part.length==5 && Integer.parseInt(val2)==1){
+				context.write(keys1,new IntWritable(1));
+			}
+		}
+	}
+	public static class reducer extends Reducer<Text,IntWritable,Text,IntWritable>{
+		public void reduce(Text key,Iterable<IntWritable> values,Context context) throws IOException, InterruptedException{
+			int sum=0;
+			for (IntWritable i : values){
+				sum=sum+i.get();
+			}
+			context.write(key, new IntWritable(sum));
+		}
+	}
+	public static void main(String []args) throws IllegalArgumentException, IOException, ClassNotFoundException, InterruptedException{
+		Configuration conf=new Configuration();
+		Job job=Job.getInstance(conf,"WordCount");
+		job.setJarByClass(WordCount.class);
+		job.setMapperClass(mapper.class);
+		job.setCombinerClass(reducer.class);
+		job.setReducerClass(reducer.class);
+		job.setOutputKeyClass(Text.class);
+		job.setOutputValueClass(IntWritable.class);
+		FileInputFormat.addInputPath(job,new Path(args[0]));
+		FileOutputFormat.setOutputPath(job,new Path(args[1]));
+		System.exit(job.waitForCompletion(true) ? 0 : 1 );
+	}
+}
+//code
+[cloudera@quickstart ~]$ hadoop jar /home/cloudera/checker2.jar WordCount /input/Music-dataset.csv /outpu23
+22/05/14 10:58:46 INFO client.RMProxy: Connecting to ResourceManager at /0.0.0.0:8032
+22/05/14 10:58:50 WARN mapreduce.JobSubmitter: Hadoop command-line option parsing not performed. Implement the Tool interface and execute your application with ToolRunner to remedy this.
+22/05/14 10:58:52 INFO input.FileInputFormat: Total input paths to process : 1
+22/05/14 10:58:52 INFO mapreduce.JobSubmitter: number of splits:1
+22/05/14 10:58:54 INFO mapreduce.JobSubmitter: Submitting tokens for job: job_1652546135478_0008
+22/05/14 10:58:55 INFO impl.YarnClientImpl: Submitted application application_1652546135478_0008
+22/05/14 10:58:56 INFO mapreduce.Job: The url to track the job: http://quickstart.cloudera:8088/proxy/application_1652546135478_0008/
+22/05/14 10:58:56 INFO mapreduce.Job: Running job: job_1652546135478_0008
+22/05/14 10:59:31 INFO mapreduce.Job: Job job_1652546135478_0008 running in uber mode : false
+22/05/14 10:59:31 INFO mapreduce.Job:  map 0% reduce 0%
+22/05/14 11:00:01 INFO mapreduce.Job:  map 100% reduce 0%
+22/05/14 11:00:40 INFO mapreduce.Job:  map 100% reduce 100%
+22/05/14 11:00:41 INFO mapreduce.Job: Job job_1652546135478_0008 completed successfully
+22/05/14 11:00:42 INFO mapreduce.Job: Counters: 49
+	File System Counters
+		FILE: Number of bytes read=19
+		FILE: Number of bytes written=220599
+		FILE: Number of read operations=0
+		FILE: Number of large read operations=0
+		FILE: Number of write operations=0
+		HDFS: Number of bytes read=5493
+		HDFS: Number of bytes written=10
+		HDFS: Number of read operations=6
+		HDFS: Number of large read operations=0
+		HDFS: Number of write operations=2
+	Job Counters 
+		Launched map tasks=1
+		Launched reduce tasks=1
+		Data-local map tasks=1
+		Total time spent by all maps in occupied slots (ms)=28104
+		Total time spent by all reduces in occupied slots (ms)=35585
+		Total time spent by all map tasks (ms)=28104
+		Total time spent by all reduce tasks (ms)=35585
+		Total vcore-seconds taken by all map tasks=28104
+		Total vcore-seconds taken by all reduce tasks=35585
+		Total megabyte-seconds taken by all map tasks=28778496
+		Total megabyte-seconds taken by all reduce tasks=36439040
+	Map-Reduce Framework
+		Map input records=199
+		Map output records=93
+		Map output bytes=1023
+		Map output materialized bytes=19
+		Input split bytes=120
+		Combine input records=93
+		Combine output records=1
+		Reduce input groups=1
+		Reduce shuffle bytes=19
+		Reduce input records=1
+		Reduce output records=1
+		Spilled Records=2
+		Shuffled Maps =1
+		Failed Shuffles=0
+		Merged Map outputs=1
+		GC time elapsed (ms)=616
+		CPU time spent (ms)=2290
+		Physical memory (bytes) snapshot=333447168
+		Virtual memory (bytes) snapshot=3007225856
+		Total committed heap usage (bytes)=226365440
+	Shuffle Errors
+		BAD_ID=0
+		CONNECTION=0
+		IO_ERROR=0
+		WRONG_LENGTH=0
+		WRONG_MAP=0
+		WRONG_REDUCE=0
+	File Input Format Counters 
+		Bytes Read=5373
+	File Output Format Counters 
+		Bytes Written=10
+[cloudera@quickstart ~]$ hdfs dfs -ls /outpu23
+Found 2 items
+-rw-r--r--   1 cloudera supergroup          0 2022-05-14 11:00 /outpu23/_SUCCESS
+-rw-r--r--   1 cloudera supergroup         10 2022-05-14 11:00 /outpu23/part-r-00000
+[cloudera@quickstart ~]$ hdfs dfs -cat /outpu23/part-r-00000
+shared	93
+[cloudera@quickstart ~]$ hadoop jar /home/cloudera/checker2.jar WordCount /input/Music-dataset.csv /outpu24
+22/05/14 11:09:37 INFO client.RMProxy: Connecting to ResourceManager at /0.0.0.0:8032
+22/05/14 11:09:41 WARN mapreduce.JobSubmitter: Hadoop command-line option parsing not performed. Implement the Tool interface and execute your application with ToolRunner to remedy this.
+22/05/14 11:09:43 INFO input.FileInputFormat: Total input paths to process : 1
+22/05/14 11:09:43 INFO mapreduce.JobSubmitter: number of splits:1
+22/05/14 11:09:44 INFO mapreduce.JobSubmitter: Submitting tokens for job: job_1652546135478_0009
+22/05/14 11:09:46 INFO impl.YarnClientImpl: Submitted application application_1652546135478_0009
+22/05/14 11:09:46 INFO mapreduce.Job: The url to track the job: http://quickstart.cloudera:8088/proxy/application_1652546135478_0009/
+22/05/14 11:09:46 INFO mapreduce.Job: Running job: job_1652546135478_0009
+22/05/14 11:10:22 INFO mapreduce.Job: Job job_1652546135478_0009 running in uber mode : false
+22/05/14 11:10:22 INFO mapreduce.Job:  map 0% reduce 0%
+22/05/14 11:10:50 INFO mapreduce.Job:  map 100% reduce 0%
+22/05/14 11:11:20 INFO mapreduce.Job:  map 100% reduce 100%
+22/05/14 11:11:22 INFO mapreduce.Job: Job job_1652546135478_0009 completed successfully
+22/05/14 11:11:22 INFO mapreduce.Job: Counters: 49
+	File System Counters
+		FILE: Number of bytes read=32
+		FILE: Number of bytes written=220625
+		FILE: Number of read operations=0
+		FILE: Number of large read operations=0
+		FILE: Number of write operations=0
+		HDFS: Number of bytes read=5493
+		HDFS: Number of bytes written=21
+		HDFS: Number of read operations=6
+		HDFS: Number of large read operations=0
+		HDFS: Number of write operations=2
+	Job Counters 
+		Launched map tasks=1
+		Launched reduce tasks=1
+		Data-local map tasks=1
+		Total time spent by all maps in occupied slots (ms)=25677
+		Total time spent by all reduces in occupied slots (ms)=27760
+		Total time spent by all map tasks (ms)=25677
+		Total time spent by all reduce tasks (ms)=27760
+		Total vcore-seconds taken by all map tasks=25677
+		Total vcore-seconds taken by all reduce tasks=27760
+		Total megabyte-seconds taken by all map tasks=26293248
+		Total megabyte-seconds taken by all reduce tasks=28426240
+	Map-Reduce Framework
+		Map input records=199
+		Map output records=162
+		Map output bytes=1736
+		Map output materialized bytes=32
+		Input split bytes=120
+		Combine input records=162
+		Combine output records=2
+		Reduce input groups=2
+		Reduce shuffle bytes=32
+		Reduce input records=2
+		Reduce output records=2
+		Spilled Records=4
+		Shuffled Maps =1
+		Failed Shuffles=0
+		Merged Map outputs=1
+		GC time elapsed (ms)=665
+		CPU time spent (ms)=2330
+		Physical memory (bytes) snapshot=345378816
+		Virtual memory (bytes) snapshot=3007389696
+		Total committed heap usage (bytes)=226365440
+	Shuffle Errors
+		BAD_ID=0
+		CONNECTION=0
+		IO_ERROR=0
+		WRONG_LENGTH=0
+		WRONG_MAP=0
+		WRONG_REDUCE=0
+	File Input Format Counters 
+		Bytes Read=5373
+	File Output Format Counters 
+		Bytes Written=21
+[cloudera@quickstart ~]$ hdfs dfs -ls /outpu24
+Found 2 items
+-rw-r--r--   1 cloudera supergroup          0 2022-05-14 11:11 /outpu24/_SUCCESS
+-rw-r--r--   1 cloudera supergroup         21 2022-05-14 11:11 /outpu24/part-r-00000
+[cloudera@quickstart ~]$ hdfs dfs -cat /outpu24/part-r-00000
+radio	104
+skipped	58
+[cloudera@quickstart ~]$ 
+

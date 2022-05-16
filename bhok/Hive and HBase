@@ -1,0 +1,46 @@
+1.To Start the hive
+  Open the terminal type hive
+  if it is not working then hadoop dfsadmin -safemode leave
+2.To create table in hive
+  create table table_name(column_name datatype,column_name datatype) row format delimited fields terminated by ',' stored as textfile;
+3.To add data into the hive from the local csv or text file
+  load data local inpath '/home/cloudera/filename.txt' into table table_name;
+4.To select emp name with max salary
+  use the following subquery
+  select e.empname from empinfo as e where e.empid IN (select max(p.empid) from empinfo as p);
+5.To create an index on speacific column of the table
+  create index index_name on table table_name(column_name) as 'org.apache.hadoop.hive.ql.index.compact.CompactIndexHandler' WITH DEFERRED REBUILD;
+  show index on table_name;
+6.To find the order with maximum cost
+  select max(o.quantity*i.item_price) from order_info as o JOIN item_info as i ON o.item_id=i.item_id;
+7.Hbase commands
+  1.To start type
+    hbase shell
+  2.To create table in hbase
+    create 'table_name','col_name1','col_name2'
+  3.To display all tables
+    list
+  4.To dispaly the particular table
+    scan 'table_name'
+  5.To insert the record into the table
+    put 'table_name',rownumber,'col_name1:key1','value1'
+  6.To alter table(add new column)
+    alter 'table_name',NAME=>'new_col_name'
+  7.To delete column
+    alter 'table_name',NAME=>'new_col_name',METHOD=>'delete'
+  8.To drop table
+    drop 'table_name'
+  9.To disable table
+    disable 'table_name'
+  10.To Display record of particular row
+    get 'table_name',row_number
+  11.To Display record of particular row with it's column
+    get 'table_name',row_number,COLUMNS=>['col1:key1','col1:key2']
+  12.To connect the Hive to Hbase
+    create external table table_name(key int,col1 datatype,col2 datatype)
+    STORED BY "org.apache.hadoop.hive.hbse.HBaseStorageHandler"
+    WITH SERDEPROPERTIES ("hbase.columns.mappings"=":key,col1:key1,col1:key2")
+    TABLEPROPERTIES ("hbase.table.name"="hbase_table_name")
+    
+    to check in hbase use 
+    scan hbase_table_name   
